@@ -18,7 +18,7 @@ pub async fn server() {
         App::new()
             .app_data(data.clone())
             .service(web::resource("/message").route(web::post().to(send_message)))
-            .route("/events", web::get().to(stream_messages))
+            .route("/stream_messages", web::get().to(stream_messages))
         })
     .bind(SERVER_SETTINGS)
     {
