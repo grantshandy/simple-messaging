@@ -1,22 +1,20 @@
-mod json_types;
+pub mod json_types;
 
-use crate::SERVER_SETTINGS;
-use std::sync::mpsc;
+use crate::{BACKLOG_PATH, SERVER_SETTINGS};
 use std::sync::Mutex;
-use std::sync::RwLock;
 
 use actix_web::Responder;
 use actix_web::{web, web::Data, App, HttpResponse, HttpServer};
 use chrono::prelude::*;
 use futures_util::StreamExt;
-use json_types::{Broadcaster, Error, Message};
+use json_types::{Broadcaster, Error, Message, StoredMessage};
 
-pub async fn server() {
-    let data = Broadcaster::create();
+pub async fn server(broadcaster: Data<Mutex<Broadcaster>>) {
+    println!("Starting Server!");
 
     let server = match HttpServer::new(move || {
         App::new()
-            .app_data(data.clone())
+            .app_data(broadcaster.clone())
             .service(web::resource("/message").route(web::post().to(send_message)))
             .route("/stream_messages", web::get().to(stream_messages))
         })
@@ -71,14 +69,22 @@ async fn send_message(
         }
     };
 
+    let stored_message = StoredMessage {
+        text: message.text,
+        user: message.user,
+        time: now.to_rfc3339(),
+    };
+
+    fstream::write_text(BACKLOG_PATH, format!("{}\n", stored_message.to_string()), false);
+
     // Send the message to the broadcaster
     broadcaster
         .lock()
         .unwrap()
-        .send(format!("{}\n", message).as_str());
+        .send(format!("{}\n", stored_message.to_string()));
 
     // Show that we're working!
-    println!("{} [{}]: {}", now, message.user, message.text);
+    println!("{} [{}]: {}", now, stored_message.user, stored_message.text);
 
     Ok(HttpResponse::Ok().finish())
 }

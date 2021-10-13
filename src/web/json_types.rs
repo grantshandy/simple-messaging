@@ -6,10 +6,12 @@ use std::task::{Context, Poll};
 use actix_web::http::StatusCode;
 use actix_web::web::{Bytes, Data};
 use actix_web::{web, ResponseError};
-use futures::{Stream, StreamExt};
+use futures::Stream;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, to_string_pretty};
+use serde_json::{json, to_string};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
+
+use crate::BACKLOG_PATH;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Error {
@@ -19,7 +21,7 @@ pub struct Error {
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        write!(f, "{}", to_string_pretty(self).unwrap())
+        write!(f, "{}", to_string(self).unwrap())
     }
 }
 
@@ -31,6 +33,19 @@ impl ResponseError for Error {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StoredMessage {
+    pub text: String,
+    pub user: String,
+    pub time: String,
+}
+
+impl Display for StoredMessage {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(f, "{}", to_string(self).unwrap())
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Message {
     pub text: String,
@@ -39,7 +54,7 @@ pub struct Message {
 
 impl Display for Message {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        write!(f, "{}", to_string_pretty(self).unwrap())
+        write!(f, "{}", to_string(self).unwrap())
     }
 }
 
@@ -58,31 +73,21 @@ impl Broadcaster {
         }
     }
 
-    pub fn remove_stale_clients(&mut self) {
-        let mut ok_clients = Vec::new();
-        for client in self.clients.iter() {
-            let result = client.clone().try_send(Bytes::from("data: ping\n\n"));
-
-            if let Ok(()) = result {
-                ok_clients.push(client.clone());
-            }
-        }
-        self.clients = ok_clients;
-    }
-
     pub fn new_client(&mut self) -> Client {
         let (tx, rx) = channel(100);
 
+        let buffer = fstream::read(BACKLOG_PATH).unwrap();
+
         tx.clone()
-            .try_send(Bytes::from("data: connected\n\n"))
+            .try_send(Bytes::from(buffer))
             .unwrap();
 
         self.clients.push(tx);
         Client(rx)
     }
 
-    pub fn send(&self, msg: &str) {
-        let msg = Bytes::from(["data: ", msg, "\n\n"].concat());
+    pub fn send(&self, msg: String) {
+        let msg = Bytes::from(msg);
 
         for client in self.clients.iter() {
             client.clone().try_send(msg.clone()).unwrap_or(());
