@@ -1,3 +1,4 @@
+backend/target/
+backend/Cargo.lock
+backend/messages.log
 target/
-Cargo.lock
-messages.log
