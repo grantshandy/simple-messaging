@@ -11,8 +11,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, to_string};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 
-use crate::BACKLOG_PATH;
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Error {
     pub msg: String,
@@ -76,18 +74,12 @@ impl Broadcaster {
     pub fn new_client(&mut self) -> Client {
         let (tx, rx) = channel(100);
 
-        let buffer = fstream::read(BACKLOG_PATH).unwrap();
-
-        tx.clone()
-            .try_send(Bytes::from(buffer))
-            .unwrap();
-
         self.clients.push(tx);
         Client(rx)
     }
 
     pub fn send(&self, msg: String) {
-        let msg = Bytes::from(msg);
+        let msg = Bytes::from(["data: ", msg.as_str(), "\n\n"].concat());
 
         for client in self.clients.iter() {
             client.clone().try_send(msg.clone()).unwrap_or(());

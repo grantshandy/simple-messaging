@@ -2,8 +2,7 @@ mod web;
 
 use web::json_types::Broadcaster;
 
-pub const SERVER_SETTINGS: (&str, u16) = ("127.0.0.1", 8080);
-pub const BACKLOG_PATH: &'static str = "messages.log";
+pub const SERVER_SETTINGS: (&str, u16) = ("0.0.0.0", 8080);
 
 #[actix_web::main]
 async fn main() {

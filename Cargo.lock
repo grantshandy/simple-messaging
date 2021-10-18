@@ -320,6 +320,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "backend"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "chrono",
+ "futures",
+ "futures-util",
+ "serde",
+ "serde_json",
+ "tokio 1.12.0",
+]
+
+[[package]]
 name = "base-x"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -559,12 +572,6 @@ dependencies = [
  "matches",
  "percent-encoding",
 ]
-
-[[package]]
-name = "fstream"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd3bf8db348c3dd17bb0cab30faa4284d70570d2a1e1ec08d52e06e4613de596"
 
 [[package]]
 name = "fuchsia-zircon"
@@ -913,20 +920,6 @@ name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
-
-[[package]]
-name = "message-backend"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "chrono",
- "fstream",
- "futures",
- "futures-util",
- "serde",
- "serde_json",
- "tokio 1.12.0",
-]
 
 [[package]]
 name = "mime"

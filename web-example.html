@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <style>
+        @font-face {
+            font-family: "Vulf Sans";
+            font-style: normal;
+            font-weight: 400;
+            src: url("https://grantshandy.github.io/Vulf_Sans-Regular.woff2");
+        }
+        
+        body {
+            font: 14px/1.5 "Vulf Sans";
+            font-weight:400;
+        }
+
+        #chatLogs {
+            height: 150px;
+            width: 400px;
+            overflow-x: hidden;
+            overflow-y: auto;
+
+            font-size: 12px;
+            line-height: 2px;
+            font-family: monospace;
+        }
+        </style>          
+    </head>
+    <body>
+        <h1>Example Javascript Chat Client</h1>
+        <p>My Username: <input type="text" id="username"></p>
+        <div id="chatLogs"></div>
+        <p><input type="text" id="input"><input type="button" value="Send" onclick="clickPress()""></p>
+        <script>
+            const chatLogs = document.getElementById('chatLogs');
+            const inputBox = document.getElementById('input');
+            const username = document.getElementById('username');
+
+            const messageSource = new EventSource("http://127.0.0.1:8080/stream_messages", { mode: 'no-cors' });
+
+            messageSource.onmessage = function(event) {
+                var message = JSON.parse(event.data);
+                var time = new Date(message.time);
+
+                chatLogs.innerHTML += "<p>["+message.user+"]: "+message.text+"</p>";
+                chatLogs.scrollTop = chatLogs.scrollHeight;
+            }
+
+            async function clickPress() {
+                await fetch('http://127.0.0.1:8080/message', {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({text: inputBox.value, user: username.value})
+                });
+
+                inputBox.value = "";
+            }
+        </script>
+    </body>
+</html>

@@ -1,6 +1,6 @@
 pub mod json_types;
 
-use crate::{BACKLOG_PATH, SERVER_SETTINGS};
+use crate::SERVER_SETTINGS;
 use std::sync::Mutex;
 
 use actix_web::Responder;
@@ -10,7 +10,7 @@ use futures_util::StreamExt;
 use json_types::{Broadcaster, Error, Message, StoredMessage};
 
 pub async fn server(broadcaster: Data<Mutex<Broadcaster>>) {
-    println!("Starting Server!");
+    println!("Starting Server on {}:{}!", SERVER_SETTINGS.0, SERVER_SETTINGS.1);
 
     let server = match HttpServer::new(move || {
         App::new()
@@ -69,13 +69,16 @@ async fn send_message(
         }
     };
 
-    let stored_message = StoredMessage {
-        text: message.text,
-        user: message.user,
-        time: now.to_rfc3339(),
+    let user = match message.user.as_str() {
+        "" => "anon".to_string(),
+        &_ => message.user,
     };
 
-    fstream::write_text(BACKLOG_PATH, format!("{}\n", stored_message.to_string()), false);
+    let stored_message = StoredMessage {
+        text: message.text,
+        user,
+        time: now.to_rfc3339(),
+    };
 
     // Send the message to the broadcaster
     broadcaster
@@ -93,6 +96,7 @@ async fn stream_messages(broadcaster: Data<Mutex<Broadcaster>>) -> impl Responde
     let rx = broadcaster.lock().unwrap().new_client();
 
     HttpResponse::Ok()
-        .header("content-type", "text/event-stream")
+        .header("Content-Type", "text/event-stream; charset=utf-8")
+        .header("Access-Control-Allow-Origin","*")
         .streaming(rx)
 }

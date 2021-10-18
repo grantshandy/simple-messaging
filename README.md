@@ -1,8 +1,11 @@
 # skyline-messaging
 A simple messaging protocol and server for writing your own clients to talk to other people.
 
-## Docs
+# Docs
+## Running your own server
+Before you run the server you must [install Rust](https://www.rust-lang.org/tools/install) in order to compile it.
 
+## Creating a client
 ### Send a message to the chat server
 Here's a python example of how to send a message to the chat server in python:
 ```python
