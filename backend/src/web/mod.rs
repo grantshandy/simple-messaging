@@ -15,6 +15,7 @@ pub async fn server(broadcaster: Data<Mutex<Broadcaster>>) {
     let server = match HttpServer::new(move || {
         App::new()
             .app_data(broadcaster.clone())
+            .route("/", web::get().to(index))
             .service(web::resource("/message").route(web::post().to(send_message)))
             .route("/stream_messages", web::get().to(stream_messages))
         })
@@ -34,6 +35,12 @@ pub async fn server(broadcaster: Data<Mutex<Broadcaster>>) {
         Ok(_) => (),
         Err(error) => eprintln!("Error while running the server: {}", error),
     }
+}
+
+async fn index() -> HttpResponse {
+    HttpResponse::Ok()
+        .header("Content-Type", "text/html")
+        .body(include_str!("../../../web-example.html"))
 }
 
 async fn send_message(
